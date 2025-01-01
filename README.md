@@ -1,6 +1,6 @@
 # Decision and Focus Audit Tools
 
-This repository contains two self-contained HTML tools designed to help you improve your work habits and decision-making processes. Thank you to Ali Abdaal and his video on [5 Mistakes Ruining Your Focus](https://www.youtube.com/watch?v=5Rqiba5mqLk)) for the inspiration on the Focus tool 
+This repository contains two self-contained HTML tools designed to help you improve your work habits and decision-making processes. Thank you to Ali Abdaal and his video on [5 Mistakes Ruining Your Focus](https://www.youtube.com/watch?v=5Rqiba5mqLk) for the inspiration on the Focus tool 
 
 ## 1. Decision Self-Audit Tool (decision-audit.html)
 
