@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Decision Self-Audit Tool</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f2f5;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #1a1a1a;
+            margin-bottom: 30px;
+        }
+
+        .question {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .question-text {
+            font-size: 1.1em;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+
+        .question-icon {
+            margin-right: 10px;
+            color: #3498db;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            font-size: 0.9em;
+        }
+
+        .btn-option {
+            background-color: #f0f0f0;
+        }
+
+        .btn-option:hover {
+            background-color: #e0e0e0;
+        }
+
+        .btn-option.selected {
+            background-color: #3498db;
+            color: white;
+        }
+
+        .btn-analyze {
+            background-color: #3498db;
+            color: white;
+            padding: 12px 24px;
+            font-size: 1em;
+            margin: 20px auto;
+            display: block;
+        }
+
+        .btn-analyze:hover {
+            background-color: #2980b9;
+        }
+
+        .btn-analyze:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+        }
+
+        .results {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .alert-high {
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
+
+        .alert-medium {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+
+        .alert-low {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+
+        .warnings {
+            margin-top: 20px;
+        }
+
+        .warnings li {
+            margin-bottom: 10px;
+        }
+
+        .btn-reset {
+            background-color: #64748b;
+            color: white;
+            margin-top: 20px;
+        }
+
+        .btn-reset:hover {
+            background-color: #475569;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 15px;
+            }
+
+            .buttons {
+                flex-direction: column;
+            }
+
+            button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Decision Self-Audit Tool</h1>
+        <div id="questions"></div>
+        <button id="analyzeBtn" class="btn-analyze" disabled>Analyze Decision Risk</button>
+        <div id="results" class="results">
+            <div id="riskAlert" class="alert"></div>
+            <div class="warnings">
+                <h3>Areas to Address:</h3>
+                <ul id="warningsList"></ul>
+            </div>
+            <button class="btn-reset" onclick="reset()">Start Over</button>
+        </div>
+    </div>
+
+    <script>
+        const questions = [
+            {
+                id: 'time',
+                text: 'Do you have enough time to think this through?',
+                weight: 2,
+                warning: 'Rushing decisions often leads to mistakes. Consider requesting more time.'
+            },
+            {
+                id: 'pressure',
+                text: 'Are you feeling pressured by others to make this decision quickly?',
+                weight: 2,
+                warning: 'External pressure can cloud judgment. Try to create space for clear thinking.'
+            },
+            {
+                id: 'gut',
+                text: 'Does this decision align with your gut feeling?',
+                weight: 3,
+                warning: 'Your instincts are often based on pattern recognition. Take them seriously.'
+            },
+            {
+                id: 'consequences',
+                text: 'Have you considered the potential negative consequences?',
+                weight: 3,
+                warning: 'Take time to imagine worst-case scenarios and their likelihood.'
+            },
+            {
+                id: 'alternatives',
+                text: 'Have you explored alternative approaches?',
+                weight: 2,
+                warning: 'There are usually more options than immediately apparent.'
+            },
+            {
+                id: 'consult',
+                text: 'Should you consult someone else before proceeding?',
+                weight: 2,
+                warning: 'Getting another perspective can reveal blind spots.'
+            },
+            {
+                id: 'reversible',
+                text: 'Is this decision easily reversible if it proves wrong?',
+                weight: 2,
+                warning: 'Hard-to-reverse decisions need extra scrutiny.'
+            },
+            {
+                id: 'documentation',
+                text: 'Have you documented your reasoning?',
+                weight: 1,
+                warning: 'Documentation helps with future reference and learning.'
+            }
+        ];
+
+        const answers = {};
+
+        function createQuestionElement(question) {
+            const div = document.createElement('div');
+            div.className = 'question';
+            div.innerHTML = `
+                <div class="question-text">
+                    <span class="question-icon">❓</span>
+                    ${question.text}
+                </div>
+                <div class="buttons">
+                    <button class="btn-option" onclick="handleAnswer('${question.id}', true)">Yes</button>
+                    <button class="btn-option" onclick="handleAnswer('${question.id}', 'maybe')">Not Sure</button>
+                    <button class="btn-option" onclick="handleAnswer('${question.id}', false)">No</button>
+                </div>
+            `;
+            return div;
+        }
+
+        function handleAnswer(questionId, value) {
+            answers[questionId] = value;
+            
+            // Update button styles
+            const buttons = document.querySelectorAll(`[onclick*="${questionId}"]`);
+            buttons.forEach(button => {
+                button.classList.remove('selected');
+                if (button.textContent === 'Yes' && value === true ||
+                    button.textContent === 'Not Sure' && value === 'maybe' ||
+                    button.textContent === 'No' && value === false) {
+                    button.classList.add('selected');
+                }
+            });
+
+            // Enable/disable analyze button
+            document.getElementById('analyzeBtn').disabled = 
+                Object.keys(answers).length < questions.length;
+        }
+
+        function calculateRisk() {
+            let riskScore = 0;
+            let maxScore = 0;
+            let warnings = [];
+
+            questions.forEach(q => {
+                maxScore += q.weight * 2;
+                if (answers[q.id] === false) {
+                    riskScore += q.weight * 2;
+                    warnings.push(q.warning);
+                } else if (answers[q.id] === 'maybe') {
+                    riskScore += q.weight;
+                    warnings.push(q.warning);
+                }
+            });
+
+            const riskPercentage = (riskScore / maxScore) * 100;
+            return {
+                riskLevel: riskPercentage > 60 ? 'high' : riskPercentage > 30 ? 'medium' : 'low',
+                warnings: warnings
+            };
+        }
+
+        function showResults() {
+            const results = calculateRisk();
+            const alertDiv = document.getElementById('riskAlert');
+            const warningsList = document.getElementById('warningsList');
+
+            // Clear previous results
+            alertDiv.className = 'alert';
+            warningsList.innerHTML = '';
+
+            // Set alert message and style
+            if (results.riskLevel === 'high') {
+                alertDiv.classList.add('alert-high');
+                alertDiv.innerHTML = '⚠️ High risk detected. Strongly consider pausing and reviewing your decision.';
+            } else if (results.riskLevel === 'medium') {
+                alertDiv.classList.add('alert-medium');
+                alertDiv.innerHTML = '⚠️ Medium risk detected. Consider addressing the warnings below before proceeding.';
+            } else {
+                alertDiv.classList.add('alert-low');
+                alertDiv.innerHTML = '✅ Low risk detected. You\'ve considered key factors, but review any warnings below.';
+            }
+
+            // Add warnings
+            results.warnings.forEach(warning => {
+                const li = document.createElement('li');
+                li.textContent = warning;
+                warningsList.appendChild(li);
+            });
+
+            // Show results
+            document.getElementById('questions').style.display = 'none';
+            document.getElementById('analyzeBtn').style.display = 'none';
+            document.getElementById('results').style.display = 'block';
+        }
+
+        function reset() {
+            // Clear answers
+            Object.keys(answers).forEach(key => delete answers[key]);
+            
+            // Reset UI
+            document.querySelectorAll('.btn-option').forEach(button => {
+                button.classList.remove('selected');
+            });
+            document.getElementById('analyzeBtn').disabled = true;
+            document.getElementById('questions').style.display = 'block';
+            document.getElementById('analyzeBtn').style.display = 'block';
+            document.getElementById('results').style.display = 'none';
+        }
+
+        // Initialize
+        window.onload = function() {
+            const questionsDiv = document.getElementById('questions');
+            questions.forEach(question => {
+                questionsDiv.appendChild(createQuestionElement(question));
+            });
+
+            document.getElementById('analyzeBtn').onclick = showResults;
+        };
+    </script>
+</body>
+</html>
